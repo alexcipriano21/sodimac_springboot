@@ -21,13 +21,15 @@ public class UsuarioService {
     @Autowired
     private JavaMailSender mailSender;
 
-    public Usuario registrar(Usuario usuario){
+    public Usuario registrar(Usuario usuario) {
         return usuarioRepository.save(usuario);
     }
-    public Optional<Usuario> login(String correo){
+
+    public Optional<Usuario> login(String correo) {
         return usuarioRepository.findByCorreo(correo);
     }
-    public void enviarEmailRecuperacion(String correoDestino, String token){
+
+    public void enviarEmailRecuperacion(String correoDestino, String token) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("alexander.cipriano2019@gmail.com");
         message.setTo(correoDestino);
@@ -35,9 +37,10 @@ public class UsuarioService {
         message.setText("Usa este token para restablecer tu clave: " + token + "\nExpira en 15 minutos.");
         mailSender.send(message);
     }
-    public void solicitarRecuperacion(String correo){
+
+    public void solicitarRecuperacion(String correo) {
         Optional<Usuario> usuarioOpt = usuarioRepository.findByCorreo(correo);
-        if (usuarioOpt.isPresent()){
+        if (usuarioOpt.isPresent()) {
             String token = java.util.UUID.randomUUID().toString();
             RecuperarPassword rp = new RecuperarPassword();
             rp.setCorreo(correo);
@@ -45,6 +48,28 @@ public class UsuarioService {
             rp.setExpiraAt(java.time.LocalDateTime.now().plusMinutes(15));
             recuperarRepository.save(rp);
             enviarEmailRecuperacion(correo, token);
+        }
+    }
+
+    public void restablecerPassword(String token, String nuevaPassword) throws Exception {
+        Optional<RecuperarPassword> rpOpt = recuperarRepository.findByToken(token);
+        if (rpOpt.isPresent()) {
+            RecuperarPassword rp = rpOpt.get();
+            if (rp.getExpiraAt().isAfter(java.time.LocalDateTime.now())) {
+                Optional<Usuario> usuarioOpt = usuarioRepository.findByCorreo(rp.getCorreo());
+                if (usuarioOpt.isPresent()) {
+                    Usuario usuario = usuarioOpt.get();
+                    usuario.setPassword(nuevaPassword); // En producción aquí debería ir un encoder (ej. BCrypt)
+                    usuarioRepository.save(usuario);
+                    recuperarRepository.delete(rp); // Borramos el token usado
+                } else {
+                    throw new Exception("Usuario no encontrado.");
+                }
+            } else {
+                throw new Exception("El token ha expirado.");
+            }
+        } else {
+            throw new Exception("El token no es válido.");
         }
     }
 }

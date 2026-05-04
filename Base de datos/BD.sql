@@ -61,21 +61,30 @@ create table Pedido (
   foreign key (idUsuario) references Usuario(id)
 );
 
--- INSERTS (sin INTO)
-insert Usuario (nombres, apellidos, dni, password, telefono, correo, rol)
+create table carrito_items (
+  id int auto_increment primary key,
+  usuario_id int not null,
+  producto_id int not null,
+  cantidad int not null,
+  fecha_agregado datetime,
+  foreign key (usuario_id) references Usuario(id),
+  foreign key (producto_id) references Producto(id)
+);
+
+insert into Usuario (nombres, apellidos, dni, password, telefono, correo, rol)
 values ('Juan','Perez','12345678','123456','987654321','juan@gmail.com','CLIENTE');
 
-insert Categoria (detalle)
+insert into Categoria (detalle)
 values ('Herramientas'), ('Construccion');
 
-insert Producto (nombre, marca, precio, sku, idCategoria, imagen, descripcion)
+insert into Producto (nombre, marca, precio, sku, idCategoria, imagen, descripcion)
 values ('Taladro','Bosch',250.00,'SKU001',1,'img1.jpg','Taladro electrico');
 
-insert Sucursal (nombre, direccion)
+insert into Sucursal (nombre, direccion)
 values ('Sucursal Centro','Av. Peru 123');
 
-insert Inventario (idSucursal, idProducto, stock)
+insert into Inventario (idSucursal, idProducto, stock)
 values (1,1,50);
 
-insert Pedido (idUsuario, total, estado)
+insert into Pedido (idUsuario, total, estado)
 values (1,250.00,'PREPARACION');
